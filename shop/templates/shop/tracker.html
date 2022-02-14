@@ -1,0 +1,126 @@
+{% extends 'shop/basic.html' %}
+
+{% block title %}
+  Tracker
+{% endblock %}
+
+{% block body %}
+  <div class="container my-4">
+
+    <div class="col">
+      <h1>
+        <b>
+          Order Tracker
+        </b>
+      </h1>
+      <br>
+
+      <h2>
+        Enter your Order ID and Phone Number
+      </h2>
+      <br>
+
+      <form method="post" action="#" id="trackerForm">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="order_id">
+              Order ID
+            </label>
+            <input type="name" class="form-control" id="order_id" name="order_id" placeholder="Order ID">
+          </div>
+          <div class="form-group col-md-6">
+            <label for="phone">Phone</label>
+            <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          Track order
+        </button>
+      </form>
+    </div>
+    <br><br>
+
+    <div class='col' id="items_column">
+      <div id="items">
+        <br>
+        <ul class="list-group"></ul>
+      </div>
+    </div>
+
+    <div class='col' id="oitems_column">
+      <div id="oitems">
+        <br>
+        <ul class="list-group"></ul>
+      </div>
+    </div>
+
+  </div>
+
+{% endblock %}
+
+{% block js %}
+  <script>
+    // to show updates
+    $('#trackerForm').submit(function (event) {
+      $('#items').empty();
+      $('#oitems').empty();
+      var formData = {
+        'order_id': $('input[name=order_id]').val(),
+        'phone': $('input[name=phone]').val(),
+        'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+      }
+
+      $.ajax({type: 'POST', url: '/shop/tracker/', data: formData, encode: true}).done(function (data) {
+        dataJson = JSON.parse(data);
+
+        if (!($.isEmptyObject(dataJson)) || data != '{}') {
+
+          updates = dataJson[0];
+          items = JSON.parse(dataJson[1]);
+
+          //to show order status
+          $('#items').append(`<h2>
+              Order status
+            </h2><br>`);
+
+          for (i = 0; i < updates.length; i++) {
+            let desc = updates[i]['desc'];
+            let time = updates[i]['time'];
+            mystr = `<li class="list-group-item d-flex justify-content-between align-items-center">
+            ${desc}
+            <span class="badge badge-primary badge-pill"> ${time} </span>
+          </li>`;
+            $('#items').append(mystr);
+          }
+
+          //ordered items
+          $('#oitems').append(`<br><h2>
+              Ordered items
+            </h2><br>`);
+
+          //to show ordered items
+          for (item in items) {
+            let name = items[item][1];
+            let qty = items[item][0];
+            mystr = `<li class="list-group-item d-flex justify-content-between align-items-center">
+            ${name}
+            <span class="badge badge-primary badge-pill"> ${qty} </span>
+          </li>`
+            $('#oitems').append(mystr)
+
+          }
+
+        } else {
+          mystr = `<h5> Order not found! Please add a valid order ID and phone number! </h5>`;
+          $('#items').append(mystr);
+        }
+
+      });
+
+      event.preventDefault();
+
+    })
+  </script>
+{% endblock %}
